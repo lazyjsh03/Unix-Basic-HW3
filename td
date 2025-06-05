@@ -62,7 +62,7 @@ if [ "$1" = "add" ]; then
     exit 0
 fi
 
-# remove task from file
+# 할 일 제거 - rm
 if [ "$1" = "rm" ] && [ -n "$2" ]; then
     sed -i "${2}d" $TODO_FILE
     echo "할 일 제거됨: $2"
