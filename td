@@ -29,12 +29,37 @@ fi
 # 임시 파일 (데이터 변경 시 저장)
 TEMP_FILE="${TODO_FILE}.tmp"
 
-# add task to file
-if [ "$1" = "add" ] && [ -n "$2" ]; then
-    echo "$2" >> $TODO_FILE
-    echo "할 일 추가됨: $2"
-    # sort file based on priority
-    sort -k1,1 -t $'\e' $TODO_FILE -o $TODO_FILE
+# 할 일 추가 기능 - add
+if [ "$1" = "add" ]; then
+    CONTENT=""
+    DEADLINE=""
+    if [ -z "$2"]; then # 내용 인자가 입력되지 않았을 때
+        read -r -p "할 일 내용>> " CONTENT
+        if [ -z "$CONTENT" ]; then
+            echo "오류: 할 일 내용이 입력되지 않았습니다. 추가를 취소합니다." >&2
+            exit 1
+        fi
+    else    # 내용 인자가 입력됐을 때
+        CONTENT="$2"
+    fi
+
+    if [[ "$CONTENT" == *"$SEPARATOR"*]]; then
+        echo "오류: 할 일 내용에 구분자(`${SEPARATOR}`)를 포함할 수 없습니다." >&2
+        exit 1
+    fi
+
+    read -r -p "마감 기한 (YYYY-MM-DD, 비워두면 설정 안함)>> " DEADLINE
+    if [ -n "$DEADLINE_DATE" ] && ! [[ "$DEADLINE_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        echo "경고: 마감 기한 형식이 올바르지 않습니다 (YYYY-MM-DD). '미지정'으로 저장됩니다." >&2
+        DEADLINE_DATE=""
+    fi
+
+    DOEN_STATUS="0" # 완료 상태(기본값: 0)
+
+    # 내용을 파일에 추가
+    echo "${CONTENT}${DELIMITER}${DEADLINE}${DELIMITER}${DOEN_STATUS}" >> "$TODO_FILE"
+    echo "할 일 추가됨: \"$CONTENT\" (마감: ${DEADLINE:-미지정})"
+    exit 0
 fi
 
 # remove task from file
