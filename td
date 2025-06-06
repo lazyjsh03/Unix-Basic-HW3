@@ -29,10 +29,23 @@ fi
 # 임시 파일 (데이터 변경 시 저장)
 TEMP_FILE="${TODO_FILE}.tmp"
 
+# 아이디 생성 함수
+get_next_ID(){
+    if [ ! -s "$TODO_FILE" ]; then  # 파일이 비어있으면
+        echo 1
+    else 
+        # awk문법을 사용해서 id(필드 1)의 최댓값을 찾아 +1
+        # $1+0 -> $1의 값을 정수로 보장
+        awk -F"$SEPARATOR" 'BEGIN{max=0} ($1+0 > max) {max=$1} END{print max+1}' "$TODO_FILE"
+    fi
+}
+
+
 # 할 일 추가 기능 - add
 if [ "$1" = "add" ]; then
     CONTENT=""
     DEADLINE=""
+
     if [ -z "$2" ]; then # 내용 인자가 입력되지 않았을 때
         read -r -p "할 일 내용>> " CONTENT
         if [ -z "$CONTENT" ]; then
@@ -40,7 +53,9 @@ if [ "$1" = "add" ]; then
             exit 1
         fi
     else    # 내용 인자가 입력됐을 때
-        CONTENT="$2"
+        shift # 명령어 인자 제거 -> 뒤의 인자들만 남김 ex)"hello jsh"
+                # 공백까지 문자열로 인식하기 위함
+        CONTENT="$*"    # 나머지 인자들
     fi
 
     if [[ "$CONTENT" == *"$SEPARATOR"* ]]; then
@@ -48,25 +63,35 @@ if [ "$1" = "add" ]; then
         exit 1
     fi
 
-    read -r -p "마감 기한 (YYYY-MM-DD, 비워두면 설정 안함)>> " DEADLINE
-    if [ -n "$DEADLINE" ] && ! [[ "$DEADLINE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-        echo "경고: 마감 기한 형식이 올바르지 않습니다 (YYYY-MM-DD). '미지정'으로 저장됩니다." >&2
+    read -r -p "마감 기한 (YY-MM-DD, 비워두면 설정 안함)>> " DEADLINE
+    if [ -n "$DEADLINE" ] && ! [[ "$DEADLINE" =~ ^[0-9]{2}-[0-9]{2}-[0-9]{2}$ ]]; then
+        echo "경고: 마감 기한 형식이 올바르지 않습니다 (YY-MM-DD). '미지정'으로 저장됩니다." >&2
         DEADLINE=""
     fi
 
-    DOEN_STATUS="0" # 완료 상태(기본값: 0)
+    ID=$(get_next_ID)
+    DONE_STATUS="0" # 완료 상태(기본값: 0)
 
     # 내용을 파일에 추가
-    echo "${CONTENT}${SEPARATOR}${DEADLINE}${SEPARATOR}${DOEN_STATUS}" >> "$TODO_FILE"
-    echo "할 일 추가됨: \"$CONTENT\" (마감: ${DEADLINE:-미지정})"
+    echo "${ID}${SEPARATOR}${CONTENT}${SEPARATOR}${DEADLINE}${SEPARATOR}${DONE_STATUS}" >> "$TODO_FILE"
+    echo "할 일 추가됨: (ID-$ID) \"$CONTENT\" (마감: ${DEADLINE:-미지정})"
     exit 0
 fi
 
-# 할 일 제거 - rm
-# if [ "$1" = "rm" ]; then
-#     if [ -z "$2"]; then
-#         echo "삭제할 할 일의 번호를 입력하십시오>> "
-        
+# # 할 일 제거 - rm
+# if [ "$1" = "rm" -o "$2" =~ ^[0-9] -o "$2" -lt 1 ]; then
+#     ID=0
+#     if [ -z "$2"]; then     # 내용의 인자가 전달되지 않았을 때
+#         read -r -p "삭제할 할 일의 ID>> " ID
+#         if [ -z "$CONTENT" ]; then
+#             echo "오류: ID가 입력되지 않았습니다. 삭제를 취소합니다." >&2
+#             exit 1
+#         fi
+#     else 
+#         ID="$2"
+    
+    
+
 #     sed -i "${2}d" $TODO_FILE
 #     echo "할 일 제거됨: $2"
 # fi
@@ -78,3 +103,20 @@ fi
 # if [ "$1" = "list" ]; then
 #     bat -n $TODO_FILE
 # fi
+
+# 할 일 목록 초기화
+if [ "$1" = "clean" ]; then
+    if [ ! -s "$TODO_FILE" ]; then
+        echo "이미 할 일 데이터가 비어있습니다." >&2
+        exit 1
+    fi
+    check=""
+    read -r -p "정말 초기화 하시겠습니까? 한번 지워진 데이터는 되돌릴 수 없습니다.(y/n)>> " check
+
+    if [ "$check" == "y" ]; then
+        > "$TODO_FILE"
+        echo "초기화 성공"
+    else 
+        exit 1
+    fi
+fi
