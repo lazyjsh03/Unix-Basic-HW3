@@ -33,7 +33,7 @@ TEMP_FILE="${TODO_FILE}.tmp"
 if [ "$1" = "add" ]; then
     CONTENT=""
     DEADLINE=""
-    if [ -z "$2"]; then # 내용 인자가 입력되지 않았을 때
+    if [ -z "$2" ]; then # 내용 인자가 입력되지 않았을 때
         read -r -p "할 일 내용>> " CONTENT
         if [ -z "$CONTENT" ]; then
             echo "오류: 할 일 내용이 입력되지 않았습니다. 추가를 취소합니다." >&2
