@@ -43,15 +43,15 @@ if [ "$1" = "add" ]; then
         CONTENT="$2"
     fi
 
-    if [[ "$CONTENT" == *"$SEPARATOR"*]] then
+    if [[ "$CONTENT" == *"$SEPARATOR"* ]]; then
         echo "오류: 할 일 내용에 구분자(`${SEPARATOR}`)를 포함할 수 없습니다." >&2
         exit 1
     fi
 
     read -r -p "마감 기한 (YYYY-MM-DD, 비워두면 설정 안함)>> " DEADLINE
-    if [ -n "$DEADLINE_DATE" ] && ! [[ "$DEADLINE_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+    if [ -n "$DEADLINE" ] && ! [[ "$DEADLINE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
         echo "경고: 마감 기한 형식이 올바르지 않습니다 (YYYY-MM-DD). '미지정'으로 저장됩니다." >&2
-        DEADLINE_DATE=""
+        DEADLINE=""
     fi
 
     DOEN_STATUS="0" # 완료 상태(기본값: 0)
@@ -74,7 +74,7 @@ fi
 # if [ "$1" = "edit" ] && [ -n "$2"]; then
 #     sed "${2}s/"
 
-# list tasks using bat
-if [ "$1" = "list" ]; then
-    bat -n $TODO_FILE
-fi
+# # list tasks using bat
+# if [ "$1" = "list" ]; then
+#     bat -n $TODO_FILE
+# fi
