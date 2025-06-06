@@ -43,7 +43,7 @@ if [ "$1" = "add" ]; then
         CONTENT="$2"
     fi
 
-    if [[ "$CONTENT" == *"$SEPARATOR"*]]; then
+    if [[ "$CONTENT" == *"$SEPARATOR"*]] then
         echo "오류: 할 일 내용에 구분자(`${SEPARATOR}`)를 포함할 수 없습니다." >&2
         exit 1
     fi
@@ -57,19 +57,19 @@ if [ "$1" = "add" ]; then
     DOEN_STATUS="0" # 완료 상태(기본값: 0)
 
     # 내용을 파일에 추가
-    echo "${CONTENT}${DELIMITER}${DEADLINE}${DELIMITER}${DOEN_STATUS}" >> "$TODO_FILE"
+    echo "${CONTENT}${SEPARATOR}${DEADLINE}${SEPARATOR}${DOEN_STATUS}" >> "$TODO_FILE"
     echo "할 일 추가됨: \"$CONTENT\" (마감: ${DEADLINE:-미지정})"
     exit 0
 fi
 
 # 할 일 제거 - rm
-if [ "$1" = "rm" ]; then
-    if [ -z "$2"]; then
-        echo "삭제할 할 일의 번호를 입력하십시오>> "
+# if [ "$1" = "rm" ]; then
+#     if [ -z "$2"]; then
+#         echo "삭제할 할 일의 번호를 입력하십시오>> "
         
-    sed -i "${2}d" $TODO_FILE
-    echo "할 일 제거됨: $2"
-fi
+#     sed -i "${2}d" $TODO_FILE
+#     echo "할 일 제거됨: $2"
+# fi
 
 # if [ "$1" = "edit" ] && [ -n "$2"]; then
 #     sed "${2}s/"
