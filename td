@@ -7,7 +7,7 @@
 TODO_FILE=$HOME/.todo.txt
 SEPARATOR='|'   # 구분자
 
-# create file if it doesn't exist
+# 할 일 저장 파일이 존재하지 않을 경우 파일 생성
 if [ ! -f "$TODO_FILE" ]; then
     touch $TODO_FILE
 fi
@@ -63,7 +63,10 @@ if [ "$1" = "add" ]; then
 fi
 
 # 할 일 제거 - rm
-if [ "$1" = "rm" ] && [ -n "$2" ]; then
+if [ "$1" = "rm" ]; then
+    if [ -z "$2"]; then
+        echo "삭제할 할 일의 번호를 입력하십시오>> "
+        
     sed -i "${2}d" $TODO_FILE
     echo "할 일 제거됨: $2"
 fi
