@@ -27,9 +27,6 @@ if [ "$1" = "" -o "$1" = "-h" -o "$1" = "--help" ]; then
     exit 0
 fi
 
-# 임시 파일 (데이터 변경 시 저장)
-TEMP_FILE="${TODO_FILE}.tmp"
-
 # 아이디 생성 함수
 get_next_ID(){
     if [ ! -s "$TODO_FILE" ]; then  # 파일이 비어있으면
