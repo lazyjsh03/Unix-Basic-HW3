@@ -94,13 +94,59 @@ fi
 #     echo "할 일 제거됨: $2"
 # fi
 
-# if [ "$1" = "edit" ] && [ -n "$2"]; then
-#     sed "${2}s/"
+# list 수정 기능
+if [ "$1" = "edit" ]; then
+    if [ -z "$2" ]; then
+        read -r -p "수정할 할 일 번호>> " editNum
+    else
+       editNum="$2"
+    fi
+    echo "무엇을 수정 하겠습니까? 1) 명칭 2) 날짜(번호 선택)"
 
-# # list tasks using bat
-# if [ "$1" = "list" ]; then
-#     bat -n $TODO_FILE
-# fi
+    read -r choice
+
+    case "$choice" in
+        1)
+            # 명칭 수정
+            read -r -p "새로운 할 일 명칭>> " newContent
+            if [[ "$newContent" == *"$SEPARATOR"* ]]; then
+                echo "오류: 명칭에 구분자 '${SEPARATOR}'를 포함할 수 없습니다." >&2
+                exit 1
+            fi
+            # 기존 줄에서 날짜와 상태 가져오기
+            oldLine=$(sed -n "${editNum}p" "$TODO_FILE")
+            oldDeadline=$(echo "$oldLine" | cut -d "$SEPARATOR" -f2)
+            oldStatus=$(echo "$oldLine" | cut -d "$SEPARATOR" -f3)
+            # 새로운 내용으로 줄 대체
+            sed -i "${editNum}s/.*/${newContent}${SEPARATOR}${oldDeadline}${SEPARATOR}${oldStatus}/" "$TODO_FILE"
+            echo "할 일 명칭이 수정되었습니다."
+            ;;
+        2)
+            # 날짜 수정
+            read -r -p "새로운 마감 기한 (YYYY-MM-DD, 비워두면 삭제)>> " newDeadline
+            if [ -n "$newDeadline" ] && ! [[ "$newDeadline" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                echo "경고: 날짜 형식이 올바르지 않습니다. 수정 취소." >&2
+                exit 1
+            fi
+            oldLine=$(sed -n "${editNum}p" "$TODO_FILE")
+            oldContent=$(echo "$oldLine" | cut -d "$SEPARATOR" -f1)
+            oldStatus=$(echo "$oldLine" | cut -d "$SEPARATOR" -f3)
+            sed -i "${editNum}s/.*/${oldContent}${SEPARATOR}${newDeadline}${SEPARATOR}${oldStatus}/" "$TODO_FILE"
+            echo "마감 기한이 수정되었습니다."
+            ;;
+        *)
+            echo "잘못된 선택입니다. 수정 취소."
+            exit 1
+            ;;
+        esac
+        exit 0
+fi
+
+
+# list 목록 출력 기능
+if [ "$1" = "list" ]; then
+    cat -n $TODO_FILE
+fi
 
 # 할 일 목록 초기화
 if [ "$1" = "clean" ]; then
