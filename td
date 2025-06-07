@@ -150,6 +150,10 @@ fi
 
 # list 목록 출력 기능
 if [ "$1" = "list" ]; then
+  if [ ! -s "$TODO_FILE" ]; then
+        echo "일정이 없습니다"
+        exit 0
+    fi
       awk -F"$SEPARATOR" '{
         deadline = ($3 == "" ? "날짜 미지정" : $3)
         print $1 "|" $2 "|" deadline "|" $4
