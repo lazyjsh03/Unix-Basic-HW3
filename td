@@ -176,3 +176,51 @@ if [ "$1" = "clean" ]; then
         exit 1
     fi
 fi
+
+# 할 일 완료 상태 변경 - done
+if [ "$1" = "done" ]; then
+    if [ -z "$2" ]; then
+        read -r -p "완료 처리할 할 일 ID>> " id
+    else
+        id="$2"
+    fi
+
+# 해당 ID의 줄 번호 찾기
+    line_num=$(awk -F"$SEPARATOR" -v target_id="$id" '$1 == target_id {print NR; exit}' "$TO>
+
+    if [ -z "$line_num" ]; then
+        echo "오류: ID $id 에 해당하는 항목을 찾을 수 없습니다." >&2
+        exit 1
+    fi
+
+        oldLine=$(sed -n "${line_num}p" "$TODO_FILE")
+        content=$(echo "$oldLine" | cut -d "$SEPARATOR" -f2)
+        deadline=$(echo "$oldLine" | cut -d "$SEPARATOR" -f3)
+
+        sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATO>
+        echo "완료 처리 되었습니다."
+        exit 0
+    fi
+
+# 할 일 미완료 상태로 되돌리기 - undone
+if [ "$1" = "undone" ]; then
+    if [ -z "$2" ]; then
+        read -r -p "미완료로 되돌릴 할 일 ID>> " id
+    else
+        id="$2"
+    fi
+    line_num=$(awk -F"$SEPARATOR" -v target_id="$id" '$1 == target_id {print NR; exit}' "$TO>
+
+    if [ -z "$line_num" ]; then
+        echo "오류: ID $id 에 해당하는 항목을 찾을 수 없습니다." >&2
+        exit 1
+    fi
+
+    oldLine=$(sed -n "${line_num}p" "$TODO_FILE")
+    content=$(echo "$oldLine" | cut -d "$SEPARATOR" -f2)
+    deadline=$(echo "$oldLine" | cut -d "$SEPARATOR" -f3)
+
+    sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATOR}0/>
+    echo "미완료 처리 되었습니다."
+    exit 0
+fi
