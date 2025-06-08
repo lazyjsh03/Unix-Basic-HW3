@@ -186,7 +186,7 @@ if [ "$1" = "done" ]; then
     fi
 
 # 해당 ID의 줄 번호 찾기
-    line_num=$(awk -F"$SEPARATOR" -v target_id="$id" '$1 == target_id {print NR; exit}' "$TO>
+    line_num=$(awk -F"$SEPARATOR" -v target_id="$id" '$1 == target_id {print NR; exit}' "$TODO_FILE")
 
     if [ -z "$line_num" ]; then
         echo "오류: ID $id 에 해당하는 항목을 찾을 수 없습니다." >&2
@@ -197,7 +197,7 @@ if [ "$1" = "done" ]; then
         content=$(echo "$oldLine" | cut -d "$SEPARATOR" -f2)
         deadline=$(echo "$oldLine" | cut -d "$SEPARATOR" -f3)
 
-        sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATO>
+        sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATOR}1/" "$TODO_FILE"
         echo "완료 처리 되었습니다."
         exit 0
     fi
@@ -209,7 +209,7 @@ if [ "$1" = "undone" ]; then
     else
         id="$2"
     fi
-    line_num=$(awk -F"$SEPARATOR" -v target_id="$id" '$1 == target_id {print NR; exit}' "$TO>
+    line_num=$(awk -F"$SEPARATOR" -v target_id="$id" '$1 == target_id {print NR; exit}' "$TODO_FILE")
 
     if [ -z "$line_num" ]; then
         echo "오류: ID $id 에 해당하는 항목을 찾을 수 없습니다." >&2
@@ -220,7 +220,7 @@ if [ "$1" = "undone" ]; then
     content=$(echo "$oldLine" | cut -d "$SEPARATOR" -f2)
     deadline=$(echo "$oldLine" | cut -d "$SEPARATOR" -f3)
 
-    sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATOR}0/>
+    sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATOR}0/" "$TODO_FILE"
     echo "미완료 처리 되었습니다."
     exit 0
 fi
