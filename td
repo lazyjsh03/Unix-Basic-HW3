@@ -77,23 +77,38 @@ if [ "$1" = "add" ]; then
     exit 0
 fi
 
-# # 할 일 제거 - rm
-# if [ "$1" = "rm" -o "$2" =~ ^[0-9] -o "$2" -lt 1 ]; then
-#     ID=0
-#     if [ -z "$2"]; then     # 내용의 인자가 전달되지 않았을 때
-#         read -r -p "삭제할 할 일의 ID>> " ID
-#         if [ -z "$CONTENT" ]; then
-#             echo "오류: ID가 입력되지 않았습니다. 삭제를 취소합니다." >&2
-#             exit 1
-#         fi
-#     else 
-#         ID="$2"
+# 할 일 제거 - rm
+if [ "$1" = "rm" ]; then
+    if [ -z "$2" ]; then # 인자가 입력되지 않았을 때
+        read -r -p "삭제할 할 일의 ID>> " ID
+        if [ -z "$ID" ]; then
+            echo "오류: ID가 입력되지 않았습니다. 삭제를 취소합니다." >&2
+            exit 1
+        fi
+    else    # 인자가 입력됐을 때
+        ID="$2"
+    fi
+    # ID가 숫자가 아니거나 1보다 작을 때
+    if ! [[ "$ID" =~ ^[0-9]+$ ]] || [ "$ID" -lt 1 ]; then
+        echo "오류: 유효하지 않은 ID입니다. 숫자만 입력해주세요." >&2
+        exit 1
+    fi
     
-    
+    line_num=$(awk -F"$SEPARATOR" -v target_id="$ID" '$1 == target_id {print NR; exit}' "$TODO_FILE")
+    if [ -z "$line_num" ]; then
+        echo "오류: ID $id 에 해당하는 항목을 찾을 수 없습니다." >&2
+        exit 1
+    fi
 
-#     sed -i "${2}d" $TODO_FILE
-#     echo "할 일 제거됨: $2"
-# fi
+    awk -F"$SEPARATOR" -v line_num="$line_num" 'NR != line_num' "$TODO_FILE" > "$TODO_FILE.tmp"
+    mv "$TODO_FILE.tmp" "$TODO_FILE"
+
+    if [ $? -ne 0 ]; then
+        echo "오류: 할 일을 제거하는 중 문제가 발생했습니다." >&2
+        exit 1
+    fi
+    echo "할 일 제거됨: $ID"
+fi
 
 # list 수정 기능
 if [ "$1" = "edit" ]; then
