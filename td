@@ -154,9 +154,17 @@ if [ "$1" = "list" ]; then
         echo "일정이 없습니다"
         exit 0
     fi
-      awk -F"$SEPARATOR" '{
-        deadline = ($3 == "" ? "날짜 미지정" : $3)
-        print $1 "|" $2 "|" deadline "|" $4
+    #   awk -F"$SEPARATOR" '{
+    #     deadline = ($3 == "" ? "날짜 미지정" : $3)
+    #     print $1 "|" $2 "|" deadline "|" $4
+    # }' "$TODO_FILE"
+    echo "ID   | 할 일 내용                | 마감 기한         | 완료 여부"
+    echo "-------------------------------------------------------------------"
+    awk -F"$SEPARATOR" '{
+        if ($3 == "") {
+            $3 = "날짜 미지정"
+        }
+        printf "%-4s | %-25s | %-12s | %s\n", $1, $2, $3, ($4 == "1" ? "[v]" : "[ ]")
     }' "$TODO_FILE"
 fi
 
