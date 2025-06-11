@@ -161,21 +161,57 @@ elif [ "$1" = "edit" ]; then
 
 # list 목록 출력 기능
 elif [ "$1" = "list" ]; then
-  if [ ! -s "$TODO_FILE" ]; then
+    if [ ! -s "$TODO_FILE" ]; then
         echo "일정이 없습니다"
         exit 0
     fi
-    #   awk -F"$SEPARATOR" '{
-    #     deadline = ($3 == "" ? "날짜 미지정" : $3)
-    #     print $1 "|" $2 "|" deadline "|" $4
-    # }' "$TODO_FILE"
-    echo "ID   | 할 일 내용                | 마감 기한         | 완료 여부"
-    echo "-------------------------------------------------------------------"
-    awk -F"$SEPARATOR" '{
-        if ($3 == "") {
-            $3 = "날짜 미지정"
+
+    awk -F"$SEPARATOR" '
+    # 문자열의 '표시되는' 너비를 계산하는 함수
+    # ASCII는 한 칸, 그 외 문자는 두 칸 차지함
+    # ASCII는 1, 한글 등 그 외 문자는 2로 계산
+    # 함수 내의 지역 변수를 파라미터에서 선언
+    function get_display_width(str, i, char, width) {
+        width = 0;
+        for (i = 1; i <= length(str); i++) {
+            char = substr(str, i, 1);
+            if (char ~ /[ -~]/) {
+                width += 1;
+            } else {
+                width += 2;
+            }
         }
-        printf "%-4s | %-25s | %-12s | %s\n", $1, $2, $3, ($4 == "1" ? "[v]" : "[ ]")
+        return width;
+    }
+
+    BEGIN {        
+        # 목표 너비
+        id_w=4; todo_w=25; deadl_w=15;
+
+        # 문자열 길이 계산하여 빈칸 조절 - * 사용
+        printf "%s%*s | %s%*s | %s%*s | %s\n",
+            "ID", id_w - get_display_width("ID"), "",
+            "할 일 내용", todo_w - get_display_width("할 일 내용"), "",
+            "마감 기한", deadl_w - get_display_width("마감 기한"), "",
+            "완료 여부";
+            
+        print "-------------------------------------------------------------------";
+    }
+    {
+        if ($3 == "") {
+            $3 = "날짜 미지정";
+        }
+
+        id_display_w = get_display_width($1);
+        todo_display_w = get_display_width($2);
+        deadl_display_w = get_display_width($3);
+
+        printf "%s%*s | %s%*s | %s%*s | [%s]\n",
+            $1, id_w - id_display_w, "",
+            $2, todo_w - todo_display_w, "",
+            $3, deadl_w - deadl_display_w, "",
+            ($4 == "1" ? "v" : " ");
+            
     }' "$TODO_FILE"
 
 # 할 일 목록 초기화
