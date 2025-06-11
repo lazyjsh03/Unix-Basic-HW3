@@ -75,6 +75,8 @@ elif [ "$1" = "add" ]; then
     echo "할 일 추가됨: (ID-$ID) \"$CONTENT\" (마감: ${DEADLINE:-미지정})"
     exit 0
 
+
+
 # 할 일 제거 - rm
 elif [ "$1" = "rm" ]; then
     if [ -z "$2" ]; then # 인자가 입력되지 않았을 때
@@ -107,6 +109,8 @@ elif [ "$1" = "rm" ]; then
         exit 1
     fi
     echo "할 일 제거됨: $ID"
+
+
 
 # list 수정 기능
 elif [ "$1" = "edit" ]; then
@@ -158,6 +162,8 @@ elif [ "$1" = "edit" ]; then
             ;;
     esac
     exit 0
+
+
 
 # list 목록 출력 기능
 elif [ "$1" = "list" ]; then
@@ -214,6 +220,8 @@ elif [ "$1" = "list" ]; then
             
     }' "$TODO_FILE"
 
+
+
 # 할 일 목록 초기화
 elif [ "$1" = "clean" ]; then
     if [ ! -s "$TODO_FILE" ]; then
@@ -230,6 +238,8 @@ elif [ "$1" = "clean" ]; then
         exit 1
     fi
 
+
+
 # 할 일 완료 상태 변경 - done
 elif [ "$1" = "done" ]; then
     if [ -z "$2" ]; then
@@ -237,6 +247,8 @@ elif [ "$1" = "done" ]; then
     else
         id="$2"
     fi
+
+
 
 # 해당 ID의 줄 번호 찾기
     line_num=$(awk -F"$SEPARATOR" -v target_id="$id" '$1 == target_id {print NR; exit}' "$TODO_FILE")
@@ -253,6 +265,8 @@ elif [ "$1" = "done" ]; then
         sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATOR}1/" "$TODO_FILE"
         echo "완료 처리 되었습니다."
         exit 0
+
+
 
 # 할 일 미완료 상태로 되돌리기 - undone
 elif [ "$1" = "undone" ]; then
@@ -275,6 +289,9 @@ elif [ "$1" = "undone" ]; then
     sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATOR}0/" "$TODO_FILE"
     echo "미완료 처리 되었습니다."
     exit 0
+
+
+# 잘못된 명령어 입력 시
 else 
     echo "명령어를 찾을 수 없습니다. (도움말: -h, --help)"
     exit 1
