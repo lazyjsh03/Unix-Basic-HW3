@@ -7,13 +7,23 @@
 TODO_FILE=$HOME/.todo.txt
 SEPARATOR='|'   # 구분자
 
+# 아이디 생성 함수
+get_next_ID(){
+    if [ ! -s "$TODO_FILE" ]; then  # 파일이 비어있으면
+        echo 1
+    else 
+        # awk문법을 사용해서 id(필드 1)의 최댓값을 찾아 +1
+        # $1+0 -> $1의 값을 정수로 보장
+        awk -F"$SEPARATOR" 'BEGIN{max=0} ($1+0 > max) {max=$1} END{print max+1}' "$TODO_FILE"
+    fi
+}
+
 # 할 일 저장 파일이 존재하지 않을 경우 파일 생성
 if [ ! -f "$TODO_FILE" ]; then
     touch $TODO_FILE
-fi
 
 # help message
-if [ "$1" = "" -o "$1" = "-h" -o "$1" = "--help" ]; then
+elif [ "$1" = "" -o "$1" = "-h" -o "$1" = "--help" ]; then
     echo "사용법: td <명령어> [인자]"
     echo
     echo "명령어:"
@@ -26,22 +36,11 @@ if [ "$1" = "" -o "$1" = "-h" -o "$1" = "--help" ]; then
     echo "  clean              : 할 일 목록을 초기화 합니다."
     echo "  -h, --help         : 이 도움말 메시지를 보여줍니다."
     exit 0
-fi
 
-# 아이디 생성 함수
-get_next_ID(){
-    if [ ! -s "$TODO_FILE" ]; then  # 파일이 비어있으면
-        echo 1
-    else 
-        # awk문법을 사용해서 id(필드 1)의 최댓값을 찾아 +1
-        # $1+0 -> $1의 값을 정수로 보장
-        awk -F"$SEPARATOR" 'BEGIN{max=0} ($1+0 > max) {max=$1} END{print max+1}' "$TODO_FILE"
-    fi
-}
 
 
 # 할 일 추가 기능 - add
-if [ "$1" = "add" ]; then
+elif [ "$1" = "add" ]; then
     CONTENT=""
     DEADLINE=""
 
@@ -75,10 +74,9 @@ if [ "$1" = "add" ]; then
     echo "${ID}${SEPARATOR}${CONTENT}${SEPARATOR}${DEADLINE}${SEPARATOR}${DONE_STATUS}" >> "$TODO_FILE"
     echo "할 일 추가됨: (ID-$ID) \"$CONTENT\" (마감: ${DEADLINE:-미지정})"
     exit 0
-fi
 
 # 할 일 제거 - rm
-if [ "$1" = "rm" ]; then
+elif [ "$1" = "rm" ]; then
     if [ -z "$2" ]; then # 인자가 입력되지 않았을 때
         read -r -p "삭제할 할 일의 ID>> " ID
         if [ -z "$ID" ]; then
@@ -94,13 +92,14 @@ if [ "$1" = "rm" ]; then
         exit 1
     fi
     
-    line_num=$(awk -F"$SEPARATOR" -v target_id="$ID" '$1 == target_id {print NR; exit}' "$TODO_FILE")
-    if [ -z "$line_num" ]; then
-        echo "오류: ID $id 에 해당하는 항목을 찾을 수 없습니다." >&2
+    target_id=$(awk -F"$SEPARATOR" -v target_id="$ID" '$1 == target_id {print NR; exit}' "$TODO_FILE")
+
+    if [ -z "$target_id" ]; then
+        echo "오류: ID $ID 에 해당하는 항목을 찾을 수 없습니다." >&2
         exit 1
     fi
 
-    awk -F"$SEPARATOR" -v line_num="$line_num" 'NR != line_num' "$TODO_FILE" > "$TODO_FILE.tmp"
+    awk -F"$SEPARATOR" -v target_id="$target_id" 'NR != target_id' "$TODO_FILE" > "$TODO_FILE.tmp"
     mv "$TODO_FILE.tmp" "$TODO_FILE"
 
     if [ $? -ne 0 ]; then
@@ -108,10 +107,9 @@ if [ "$1" = "rm" ]; then
         exit 1
     fi
     echo "할 일 제거됨: $ID"
-fi
 
 # list 수정 기능
-if [ "$1" = "edit" ]; then
+elif [ "$1" = "edit" ]; then
      if [ -z "$2" ]; then
         read -r -p "수정할 할 일 ID>> " id
     else
@@ -160,11 +158,9 @@ if [ "$1" = "edit" ]; then
             ;;
     esac
     exit 0
-fi
-
 
 # list 목록 출력 기능
-if [ "$1" = "list" ]; then
+elif [ "$1" = "list" ]; then
   if [ ! -s "$TODO_FILE" ]; then
         echo "일정이 없습니다"
         exit 0
@@ -181,10 +177,9 @@ if [ "$1" = "list" ]; then
         }
         printf "%-4s | %-25s | %-12s | %s\n", $1, $2, $3, ($4 == "1" ? "[v]" : "[ ]")
     }' "$TODO_FILE"
-fi
 
 # 할 일 목록 초기화
-if [ "$1" = "clean" ]; then
+elif [ "$1" = "clean" ]; then
     if [ ! -s "$TODO_FILE" ]; then
         echo "이미 할 일 데이터가 비어있습니다." >&2
         exit 1
@@ -198,10 +193,9 @@ if [ "$1" = "clean" ]; then
     else 
         exit 1
     fi
-fi
 
 # 할 일 완료 상태 변경 - done
-if [ "$1" = "done" ]; then
+elif [ "$1" = "done" ]; then
     if [ -z "$2" ]; then
         read -r -p "완료 처리할 할 일 ID>> " id
     else
@@ -223,10 +217,9 @@ if [ "$1" = "done" ]; then
         sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATOR}1/" "$TODO_FILE"
         echo "완료 처리 되었습니다."
         exit 0
-    fi
 
 # 할 일 미완료 상태로 되돌리기 - undone
-if [ "$1" = "undone" ]; then
+elif [ "$1" = "undone" ]; then
     if [ -z "$2" ]; then
         read -r -p "미완료로 되돌릴 할 일 ID>> " id
     else
@@ -246,4 +239,8 @@ if [ "$1" = "undone" ]; then
     sed -i "${line_num}s/.*/${id}${SEPARATOR}${content}${SEPARATOR}${deadline}${SEPARATOR}0/" "$TODO_FILE"
     echo "미완료 처리 되었습니다."
     exit 0
+else 
+    echo "명령어를 찾을 수 없습니다. (도움말: -h, --help)"
+    exit 1
+
 fi
