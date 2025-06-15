@@ -121,34 +121,49 @@ elif [ "$1" = "rm" ]; then
             echo "오류: ID가 입력되지 않았습니다. 삭제를 취소합니다." >&2
             exit 1
         fi
-    else    # 인자가 입력됐을 때
+
+    # 인자가 입력됐을 때
+    else    
         ID="$2"
     fi
-    # ID가 숫자가 아니거나 1보다 작을 때
+
+    # ID가 숫자가 아니거나 1보다 작을 때 오류 발생
     if ! [[ "$ID" =~ ^[0-9]+$ ]] || [ "$ID" -lt 1 ]; then
         echo "오류: 유효하지 않은 ID입니다. 숫자만 입력해주세요." >&2
         exit 1
     fi
     
+    # awk를 사용
+    # -F 옵션으로 구분자 설정 / -v 옵션으로 변수 설정
+    # 입력한 ID가 현재 행의 첫번째 필드의 값과 같은지 검사
+    # 조건이 참이면 그 행의 줄 번호를 target_id에 저장
     target_id=$(awk -F"$SEPARATOR" -v target_id="$ID" '$1 == target_id {print NR; exit}' "$TODO_FILE")
 
+    # target_id가 없을 때(일치하는 라인을 찾지 못했을 때) 오류 발생
     if [ -z "$target_id" ]; then
         echo "오류: ID $ID 에 해당하는 항목을 찾을 수 없습니다." >&2
         exit 1
     fi
 
+    # awk를 사용
+    # -F 옵션으로 구분자 설정 / -v 옵션으로 변수 설정
+    # target_id와 같은 행 번호에 해당하는 행 빼고 TODO_FILE.tmp에 저장
     awk -F"$SEPARATOR" -v target_id="$target_id" 'NR != target_id' "$TODO_FILE" > "$TODO_FILE.tmp"
+
+    # TODO_FILE.tmp를 다시 TODO_FILE로 이름변경
     mv "$TODO_FILE.tmp" "$TODO_FILE"
 
+    # 직전 명령어가 실패하면 오류 발생
     if [ $? -ne 0 ]; then
         echo "오류: 할 일을 제거하는 중 문제가 발생했습니다." >&2
         exit 1
     fi
+
     echo "할 일 제거됨: $ID"
 
 
 
-# list 수정 기능
+# 할 일 수정 기능
 elif [ "$1" = "edit" ]; then
      if [ -z "$2" ]; then
         read -r -p "수정할 할 일 ID>> " id
@@ -209,7 +224,7 @@ elif [ "$1" = "list" ]; then
     fi
 
     awk -F"$SEPARATOR" '
-    # 문자열의 '표시되는' 너비를 계산하는 함수
+    # 문자열의 '표시되는' 너비를 계산하는 함수 선언
     # ASCII는 한 칸, 그 외 문자는 두 칸 차지함
     # ASCII는 1, 한글 등 그 외 문자는 2로 계산
     # 함수 내의 지역 변수를 파라미터에서 선언
@@ -258,15 +273,19 @@ elif [ "$1" = "list" ]; then
 
 
 
-# 할 일 목록 초기화
+# 할 일 목록 초기화 - clean
 elif [ "$1" = "clean" ]; then
+
+    # TODO_FILE이 비어있을 때 오류 발생
     if [ ! -s "$TODO_FILE" ]; then
         echo "이미 할 일 데이터가 비어있습니다." >&2
         exit 1
     fi
-    check=""
+
+    # 사용자 확인 작업
     read -r -p "정말 초기화 하시겠습니까? 한번 지워진 데이터는 되돌릴 수 없습니다.(y/n)>> " check
 
+    # 사용자가 y를 입력하면 > 를 사용해 TODO_FILE을 빈 파일로 설정
     if [ "$check" == "y" ]; then
         > "$TODO_FILE"
         echo "초기화 성공"
@@ -284,9 +303,7 @@ elif [ "$1" = "done" ]; then
         id="$2"
     fi
 
-
-
-# 해당 ID의 줄 번호 찾기
+    # 해당 ID의 줄 번호 찾기
     line_num=$(awk -F"$SEPARATOR" -v target_id="$id" '$1 == target_id {print NR; exit}' "$TODO_FILE")
 
     if [ -z "$line_num" ]; then
