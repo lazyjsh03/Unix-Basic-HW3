@@ -7,22 +7,30 @@
 TODO_FILE=$HOME/.todo.txt
 SEPARATOR='|'   # 구분자
 
+
+
 # 아이디 생성 함수
 get_next_ID(){
-    if [ ! -s "$TODO_FILE" ]; then  # 파일이 비어있으면
+    # 파일이 비어있으면 ID는 1로 설정
+    if [ ! -s "$TODO_FILE" ]; then  
         echo 1
     else 
-        # awk문법을 사용해서 id(필드 1)의 최댓값을 찾아 +1
+        # awk문법을 사용해서 id(필드 1)의 최댓값을 찾아 +1 -> 새로 적용될 ID
         # $1+0 -> $1의 값을 정수로 보장
         awk -F"$SEPARATOR" 'BEGIN{max=0} ($1+0 > max) {max=$1} END{print max+1}' "$TODO_FILE"
     fi
 }
 
+
+
 # 할 일 저장 파일이 존재하지 않을 경우 파일 생성
 if [ ! -f "$TODO_FILE" ]; then
     touch $TODO_FILE
 
+
+
 # help message
+# 명령 인자가 비어있거나 옵션으로 -h, --help가 전될되었을 때
 elif [ "$1" = "" -o "$1" = "-h" -o "$1" = "--help" ]; then
     echo "사용법: td <명령어> [인자]"
     echo
@@ -41,36 +49,58 @@ elif [ "$1" = "" -o "$1" = "-h" -o "$1" = "--help" ]; then
 
 # 할 일 추가 기능 - add
 elif [ "$1" = "add" ]; then
-    CONTENT=""
-    DEADLINE=""
+    CONTENT=""      # 내용 정보 들어갈 변수
+    DEADLINE=""     # 마감기한 정보 들어갈 변수
 
-    if [ -z "$2" ]; then # 내용 인자가 입력되지 않았을 때
+    # 내용 인자가 입력되지 않았을 때
+    if [ -z "$2" ]; then
+
+        # read를 통해서 사용자에게 CONTENT 정보를 입력받음
+        # -p: 프롬프트를 통해서 입력받음 / -r: 백슬래시 무시
         read -r -p "할 일 내용>> " CONTENT
+
+        # 내용 입력이 이루어지지 않았을 때 오류 발생(표준 에러)
         if [ -z "$CONTENT" ]; then
             echo "오류: 할 일 내용이 입력되지 않았습니다. 추가를 취소합니다." >&2
             exit 1
         fi
-    else    # 내용 인자가 입력됐을 때
-        shift # 명령어 인자 제거 -> 뒤의 인자들만 남김 ex)"hello jsh"
-                # 공백까지 문자열로 인식하기 위함
-        CONTENT="$*"    # 나머지 인자들
+    # 내용 인자가 입력됐을 때
+    else    
+
+        # 명령어 인자 제거 -> 뒤의 인자들만 남김 ex)"add hello Unix" -> "hello Unix"
+        # 공백까지 문자열로 인식하기 위함
+        shift 
+
+        # 나머지 인자들(add를 제외한 모든 인자) 정보 저장
+        CONTENT="$*"
     fi
 
+    # CONTENT에 '|' 구분자가 포함될 경우 오류 발생
     if [[ "$CONTENT" == *"$SEPARATOR"* ]]; then
         echo "오류: 할 일 내용에 구분자(`${SEPARATOR}`)를 포함할 수 없습니다." >&2
         exit 1
     fi
 
+    # read와 -p 옵션을 통해 DEADLINE 정보를 프롬프트를 통해 입력받음
     read -r -p "마감 기한 (YY-MM-DD, 비워두면 설정 안함)>> " DEADLINE
+
+    # DEADLINE 의 입력이 이루어졌는데 그 형식이 YY-MM-DD이 아닐 때
     if [ -n "$DEADLINE" ] && ! [[ "$DEADLINE" =~ ^[0-9]{2}-[0-9]{2}-[0-9]{2}$ ]]; then
-        echo "경고: 마감 기한 형식이 올바르지 않습니다 (YY-MM-DD). '미지정'으로 저장됩니다." >&2
+        echo "경고: 마감 기한 형식이 올바르지 않습니다 (YY-MM-DD). '미지정'으로 저장됩니다."
+
+        # DEADLINE 정보를 미지정으로 설정
         DEADLINE=""
     fi
 
+    # 추가할 할 일 데이터의 ID를 설정
+    # 앞에서 설정한 함수를 이용해서 TODO_FILE에 저장된 ID의 최댓값+1
     ID=$(get_next_ID)
-    DONE_STATUS="0" # 완료 상태(기본값: 0)
+
+    # 완료 상태(기본값: 0)
+    DONE_STATUS="0" 
 
     # 내용을 파일에 추가
+    # 저장 형식 -> "ID|내용|마감기한|완료상태"
     echo "${ID}${SEPARATOR}${CONTENT}${SEPARATOR}${DEADLINE}${SEPARATOR}${DONE_STATUS}" >> "$TODO_FILE"
     echo "할 일 추가됨: (ID-$ID) \"$CONTENT\" (마감: ${DEADLINE:-미지정})"
     exit 0
@@ -79,8 +109,14 @@ elif [ "$1" = "add" ]; then
 
 # 할 일 제거 - rm
 elif [ "$1" = "rm" ]; then
-    if [ -z "$2" ]; then # 인자가 입력되지 않았을 때
+
+    # 인자가 입력되지 않았을 때
+    if [ -z "$2" ]; then 
+
+        # read와 -p 옵션을 통해 프롬프트와 함께 ID를 입력받음
         read -r -p "삭제할 할 일의 ID>> " ID
+
+        # ID가 입력되지 않았을 때
         if [ -z "$ID" ]; then
             echo "오류: ID가 입력되지 않았습니다. 삭제를 취소합니다." >&2
             exit 1
